@@ -50,12 +50,9 @@ const upload = multer({
 });
 
 // Database Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://03-prac:03-prac6268@03-prac.po5ieuj.mongodb.net/prooo', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB Connected to SamadhanAI DB'))
-.catch(err => console.error('MongoDB connection error:', err));
+mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://Harshali:Harshali123@cluster0.y6fjrcb.mongodb.net/?appName=Cluster0')
+    .then(() => console.log('✅ MongoDB Connected to SamadhanAI DB'))
+    .catch(err => console.error('❌ MongoDB connection error:', err.message));
 
 // Models
 const UserSchema = new mongoose.Schema({
@@ -111,6 +108,28 @@ const requireAdmin = (req, res, next) => {
 // Routes
 app.get('/api/health', (req, res) => {
     res.json({ status: 'SamadhanAI API is running' });
+});
+
+// Get current authenticated user
+app.get('/api/auth/me', authenticateToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('-password');
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        res.json({
+            success: true,
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                department: user.department
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
 });
 
 // User Authentication Routes
@@ -212,19 +231,19 @@ app.post('/api/complaints', authenticateToken, upload.array('images', 5), async 
         let priority = 'Normal';
 
         const text = (title + " " + description).toLowerCase();
-        if(text.includes('water') || text.includes('leak') || text.includes('pipe') || text.includes('drainage')) {
+        if (text.includes('water') || text.includes('leak') || text.includes('pipe') || text.includes('drainage')) {
             department = 'Water Department';
-        } else if(text.includes('electricity') || text.includes('light') || text.includes('power') || text.includes('pole') || text.includes('cable')) {
+        } else if (text.includes('electricity') || text.includes('light') || text.includes('power') || text.includes('pole') || text.includes('cable')) {
             department = 'Electricity Department';
-        } else if(text.includes('road') || text.includes('pothole') || text.includes('street') || text.includes('pavement')) {
+        } else if (text.includes('road') || text.includes('pothole') || text.includes('street') || text.includes('pavement')) {
             department = 'Road Department';
-        } else if(text.includes('safety') || text.includes('crime') || text.includes('police') || text.includes('emergency')) {
+        } else if (text.includes('safety') || text.includes('crime') || text.includes('police') || text.includes('emergency')) {
             department = 'Public Safety';
         }
 
-        if(text.includes('emergency') || text.includes('urgent') || text.includes('burst') || text.includes('broken') || text.includes('dangerous')) {
+        if (text.includes('emergency') || text.includes('urgent') || text.includes('burst') || text.includes('broken') || text.includes('dangerous')) {
             priority = 'High';
-        } else if(text.includes('critical') || text.includes('severe')) {
+        } else if (text.includes('critical') || text.includes('severe')) {
             priority = 'Urgent';
         }
 
@@ -393,6 +412,13 @@ app.post('/api/setup-admin', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+const server = app.listen(PORT, () => {
+    console.log(`✅ Server running on port ${PORT}`);
+});
+
+server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(`❌ Port ${PORT} is already in use. Kill the existing process and restart.`);
+        process.exit(1);
+    }
 });

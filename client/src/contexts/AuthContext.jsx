@@ -25,20 +25,30 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
-  // Check if user is logged in on app start
+  // Restore session on page load from localStorage
   useEffect(() => {
     const checkAuth = async () => {
       const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+
       if (storedToken) {
         try {
-          // You could add a /api/auth/verify endpoint to verify token
-          // For now, we'll just set the token
-          setToken(storedToken);
-          // In a real app, you'd decode the JWT or call an API to get user info
+          axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+          const response = await axios.get('http://localhost:5000/api/auth/me');
+          if (response.data.success) {
+            const userData = response.data.user;
+            localStorage.setItem('user', JSON.stringify(userData));
+            setToken(storedToken);
+            setUser(userData);
+          }
         } catch (error) {
           localStorage.removeItem('token');
+          localStorage.removeItem('user');
           setToken(null);
+          setUser(null);
         }
+      } else if (storedUser) {
+        setUser(JSON.parse(storedUser));
       }
       setLoading(false);
     };
@@ -56,6 +66,7 @@ export const AuthProvider = ({ children }) => {
       if (response.data.success) {
         const { token: newToken, user: userData } = response.data;
         localStorage.setItem('token', newToken);
+        localStorage.setItem('user', JSON.stringify(userData));
         setToken(newToken);
         setUser(userData);
         return { success: true };
@@ -75,6 +86,7 @@ export const AuthProvider = ({ children }) => {
       if (response.data.success) {
         const { token: newToken, user: userInfo } = response.data;
         localStorage.setItem('token', newToken);
+        localStorage.setItem('user', JSON.stringify(userInfo));
         setToken(newToken);
         setUser(userInfo);
         return { success: true };
@@ -89,6 +101,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setToken(null);
     setUser(null);
     delete axios.defaults.headers.common['Authorization'];
