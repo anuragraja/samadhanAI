@@ -231,7 +231,7 @@ function Navigation() {
               </div>
             </>
           ) : (
-            <Link to="/login" className="btn btn-primary">Login</Link>
+            <Link to="/login" className="btn btn-primary btn-sm">Login</Link>
           )}
 
           <div className="mobile-menu-btn" onClick={() => setMobileMenuOpen(o => !o)}>
