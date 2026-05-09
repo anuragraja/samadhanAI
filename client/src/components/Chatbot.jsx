@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import API_URL from '../api';
 
 const QUICK_REPLIES = [
   { label: '📋 Register Complaint', msg: 'How do I register a complaint?' },
@@ -29,7 +30,7 @@ export default function Chatbot() {
     setInput('');
     setTyping(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/chatbot', { message: msg });
+      const res = await axios.post(`${API_URL}/api/chatbot`, { message: msg });
       setTyping(false);
       if (res.data.success) {
         setMessages(prev => [...prev, { role: 'ai', text: res.data.reply, time: new Date() }]);

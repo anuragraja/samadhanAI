@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import API_URL from '../api';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line } from 'recharts';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
@@ -53,8 +54,8 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
       const [sRes, cRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/admin/stats'),
-        axios.get('http://localhost:5000/api/complaints')
+        axios.get(`${API_URL}/api/admin/stats`),
+        axios.get(`${API_URL}/api/complaints`)
       ]);
       if (sRes.data.success) setStats(sRes.data.data);
       if (cRes.data.success) setComplaints(cRes.data.data);
@@ -65,7 +66,7 @@ export default function AdminDashboard() {
   const updateStatus = async (id, status, resolution = '') => {
     try {
       setUpdating(id);
-      const res = await axios.put(`http://localhost:5000/api/complaints/${id}`, { status, resolution });
+      const res = await axios.put(`${API_URL}/api/complaints/${id}`, { status, resolution });
       if (res.data.success) {
         setComplaints(prev => prev.map(c => c._id === id ? res.data.data : c));
         if (selected?._id === id) setSelected(res.data.data);
@@ -155,8 +156,8 @@ export default function AdminDashboard() {
               <h4 className="mb-2"><i className="fa-solid fa-images text-primary"></i> Evidence ({selected.images.length})</h4>
               <div className="d-flex" style={{ gap: '10px', flexWrap: 'wrap' }}>
                 {selected.images.map((img, i) => (
-                  <a key={i} href={`http://localhost:5000/uploads/${img}`} target="_blank" rel="noreferrer">
-                    <img src={`http://localhost:5000/uploads/${img}`} alt="evidence" style={{ width: '100px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '2px solid rgba(255,255,255,0.1)' }} />
+                  <a key={i} href={`${API_URL}/uploads/${img}`} target="_blank" rel="noreferrer">
+                    <img src={`${API_URL}/uploads/${img}`} alt="evidence" style={{ width: '100px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '2px solid rgba(255,255,255,0.1)' }} />
                   </a>
                 ))}
               </div>
@@ -377,7 +378,7 @@ export default function AdminDashboard() {
                       <div key={c._id} className="complaint-row" onClick={() => setSelected(c)}>
                         <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'rgba(0,0,0,0.3)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           {c.images?.length > 0
-                            ? <img src={`http://localhost:5000/uploads/${c.images[0]}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                            ? <img src={`${API_URL}/uploads/${c.images[0]}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
                             : <i className={`fa-solid ${di?.icon}`} style={{ color: di?.color }}></i>
                           }
                         </div>

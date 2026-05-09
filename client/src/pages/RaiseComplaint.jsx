@@ -2,6 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import API_URL from '../api';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -114,7 +115,7 @@ export default function RaiseComplaint() {
       });
 
       // API call to backend
-      const res = await axios.post('http://localhost:5000/api/complaints', submitData, {
+      const res = await axios.post(`${API_URL}/api/complaints`, submitData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import API_URL from '../api';
 
 const DEPT_ICONS = {
   'Water Department': 'fa-droplet',
@@ -39,7 +40,7 @@ export default function Dashboard() {
   const fetchComplaints = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:5000/api/complaints');
+      const res = await axios.get(`${API_URL}/api/complaints`);
       if (res.data.success) setComplaints(res.data.data);
     } catch {
       setError('Failed to load complaints.');
@@ -177,7 +178,7 @@ export default function Dashboard() {
                     {/* Image */}
                     <div style={{ height:'140px', background:'rgba(0,0,0,0.3)', position:'relative', overflow:'hidden' }}>
                       {c.images?.length > 0
-                        ? <img src={`http://localhost:5000/uploads/${c.images[0]}`} alt="complaint" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                        ? <img src={`${API_URL}/uploads/${c.images[0]}`} alt="complaint" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
                         : <div style={{ height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'3rem', color:'rgba(255,255,255,0.1)' }}>
                             <i className={`fa-solid ${deptIcon}`}></i>
                           </div>

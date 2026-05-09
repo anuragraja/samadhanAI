@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_URL from '../api';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -27,7 +28,7 @@ export default function TrackComplaint() {
 
   const fetchComplaints = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/complaints');
+      const res = await axios.get(`${API_URL}/api/complaints`);
       if (res.data.success) {
         setComplaints(res.data.data);
         if (res.data.data.length > 0) setSelected(res.data.data[0]);
@@ -225,8 +226,8 @@ export default function TrackComplaint() {
                   <h5 className="mb-2 text-muted" style={{ fontSize:'0.8rem' }}>ATTACHMENTS ({selected.images.length})</h5>
                   <div className="d-flex" style={{ gap:'8px', flexWrap:'wrap' }}>
                     {selected.images.map((img, i) => (
-                      <a key={i} href={`http://localhost:5000/uploads/${img}`} target="_blank" rel="noreferrer">
-                        <img src={`http://localhost:5000/uploads/${img}`} alt={`Attachment ${i+1}`} style={{ width:'80px', height:'64px', objectFit:'cover', borderRadius:'6px', border:'1px solid rgba(255,255,255,0.15)', transition:'transform 0.2s' }}
+                      <a key={i} href={`${API_URL}/uploads/${img}`} target="_blank" rel="noreferrer">
+                        <img src={`${API_URL}/uploads/${img}`} alt={`Attachment ${i+1}`} style={{ width:'80px', height:'64px', objectFit:'cover', borderRadius:'6px', border:'1px solid rgba(255,255,255,0.15)', transition:'transform 0.2s' }}
                           onMouseEnter={e => e.target.style.transform='scale(1.05)'}
                           onMouseLeave={e => e.target.style.transform='scale(1)'}
                         />
