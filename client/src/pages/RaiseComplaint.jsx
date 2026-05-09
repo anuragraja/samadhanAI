@@ -2,13 +2,48 @@ import { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix default leaflet icon issue
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+function LocationPicker({ position, setPosition, setAddress }) {
+  const map = useMap();
+
+  useMapEvents({
+    click: async (e) => {
+      const { lat, lng } = e.latlng;
+      setPosition({ lat, lng });
+      try {
+        const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+        if (res.data && res.data.display_name) {
+          setAddress(res.data.display_name);
+        }
+      } catch (err) {
+        console.error("Geocoding failed", err);
+      }
+    },
+  });
+
+  return position === null ? null : <Marker position={position}></Marker>;
+}
 
 export default function RaiseComplaint() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    location: ''
+    location: '',
+    lat: 28.7041, // Default to Delhi
+    lng: 77.1025
   });
+  const [position, setPosition] = useState({ lat: 28.7041, lng: 77.1025 });
   const [images, setImages] = useState([]);
   const [processing, setProcessing] = useState(false);
   const [step, setStep] = useState(0);
@@ -68,6 +103,10 @@ export default function RaiseComplaint() {
       submitData.append('title', formData.title);
       submitData.append('description', formData.description);
       submitData.append('location', formData.location);
+      if (formData.lat && formData.lng) {
+        submitData.append('lat', formData.lat);
+        submitData.append('lng', formData.lng);
+      }
 
       // Append images
       images.forEach((image, index) => {
@@ -162,11 +201,11 @@ export default function RaiseComplaint() {
 
         <div className="form-group">
           <label className="form-label">Location</label>
-          <div className="d-flex gap-2">
+          <div className="d-flex gap-2 mb-2">
             <input
               type="text"
               className="form-control"
-              placeholder="Enter location or use auto-detect"
+              placeholder="Enter location or pin on map"
               value={formData.location}
               onChange={e => setFormData({...formData, location: e.target.value})}
               required
@@ -174,11 +213,46 @@ export default function RaiseComplaint() {
             <button
               type="button"
               className="btn btn-secondary"
-              onClick={() => setFormData({...formData, location: 'MG Road, Sector 14, Gurugram'})}
+              onClick={() => {
+                if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(async (pos) => {
+                    const { latitude, longitude } = pos.coords;
+                    setPosition({ lat: latitude, lng: longitude });
+                    setFormData(prev => ({...prev, lat: latitude, lng: longitude}));
+                    try {
+                      const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                      if (res.data && res.data.display_name) {
+                        setFormData(prev => ({...prev, location: res.data.display_name}));
+                      }
+                    } catch (err) {
+                      console.error("Geocoding failed", err);
+                    }
+                  });
+                } else {
+                  setError("Geolocation is not supported by this browser.");
+                }
+              }}
             >
-              <i className="fa-solid fa-location-crosshairs"></i>
+              <i className="fa-solid fa-location-crosshairs"></i> Auto-Detect
             </button>
           </div>
+          <div style={{ height: '300px', width: '100%', borderRadius: '8px', overflow: 'hidden' }}>
+            <MapContainer center={[position.lat, position.lng]} zoom={13} style={{ height: '100%', width: '100%' }}>
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
+              <LocationPicker 
+                position={position} 
+                setPosition={(pos) => {
+                  setPosition(pos);
+                  setFormData(prev => ({...prev, lat: pos.lat, lng: pos.lng}));
+                }} 
+                setAddress={(addr) => setFormData(prev => ({...prev, location: addr}))} 
+              />
+            </MapContainer>
+          </div>
+          <small className="text-muted mt-1 d-block">Click on the map to manually set the location or use auto-detect.</small>
         </div>
 
         <div className="form-group">

@@ -3,266 +3,227 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
+const DEPT_ICONS = {
+  'Water Department': 'fa-droplet',
+  'Electricity Department': 'fa-bolt',
+  'Road Department': 'fa-road',
+  'Public Safety': 'fa-shield-halved',
+  'Garbage Department': 'fa-trash',
+  'General': 'fa-building',
+};
+
+const STATUS_COLORS = {
+  'Resolved':     { bg: '#10b981', text: '#fff' },
+  'In Progress':  { bg: '#f59e0b', text: '#fff' },
+  'Submitted':    { bg: '#3b82f6', text: '#fff' },
+  'Under Review': { bg: '#8b5cf6', text: '#fff' },
+  'Rejected':     { bg: '#ef4444', text: '#fff' },
+};
+
+const PRIORITY_STYLES = {
+  'Emergency': 'priority-emergency',
+  'Urgent':    'priority-urgent',
+  'High':      'priority-high',
+  'Normal':    'priority-normal',
+  'Low':       'priority-low',
+};
+
 export default function Dashboard() {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { user } = useAuth();
 
-  useEffect(() => {
-    fetchComplaints();
-  }, []);
+  useEffect(() => { fetchComplaints(); }, []);
 
   const fetchComplaints = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/complaints');
-      if (response.data.success) {
-        setComplaints(response.data.data);
-      }
-    } catch (err) {
-      console.error('Failed to fetch complaints:', err);
-      setError('Failed to load complaints. Please try again.');
+      const res = await axios.get('http://localhost:5000/api/complaints');
+      if (res.data.success) setComplaints(res.data.data);
+    } catch {
+      setError('Failed to load complaints.');
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Resolved': return 'var(--success)';
-      case 'In Progress': return 'var(--warning)';
-      case 'Submitted': return 'var(--info)';
-      case 'Under Review': return 'var(--secondary)';
-      case 'Rejected': return 'var(--danger)';
-      default: return 'var(--muted)';
-    }
-  };
+  const resolved   = complaints.filter(c => c.status === 'Resolved').length;
+  const pending    = complaints.filter(c => ['Submitted','Under Review','In Progress'].includes(c.status)).length;
+  const urgent     = complaints.filter(c => ['Urgent','Emergency'].includes(c.priority) && c.status !== 'Resolved').length;
+  const totalScore = complaints.length > 0 ? Math.min(100, Math.round((resolved / complaints.length) * 100)) : 0;
 
-  const getPriorityIcon = (priority) => {
-    switch (priority) {
-      case 'Urgent': return 'fa-exclamation-triangle text-danger';
-      case 'High': return 'fa-exclamation-circle text-warning';
-      case 'Normal': return 'fa-info-circle text-info';
-      case 'Low': return 'fa-check-circle text-success';
-      default: return 'fa-circle text-muted';
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="dashboard-layout">
-        <div className="sidebar glass-card">
-          <div className="text-center mb-4">
-            <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--primary)', margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 'bold' }}>
-              {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-            </div>
-            <h3>{user?.name || 'User'}</h3>
-            <span className="chip mt-2" style={{ background: 'rgba(30,144,255,0.2)' }}>
-              <i className="fa-solid fa-award text-secondary"></i> Citizen
-            </span>
-          </div>
-        </div>
-        <div className="dashboard-content">
-          <div className="loading-spinner" style={{ textAlign: 'center', padding: '2rem' }}>
-            <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2rem' }}></i>
-            <p>Loading your dashboard...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div style={{ display:'flex', justifyContent:'center', alignItems:'center', height:'60vh', flexDirection:'column', gap:'1rem' }}>
+      <div style={{ width:'60px', height:'60px', borderRadius:'50%', border:'3px solid var(--secondary)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite' }}></div>
+      <p className="text-muted">Loading your dashboard...</p>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
 
   return (
     <div className="dashboard-layout">
-      <div className="sidebar glass-card">
+      {/* ── Sidebar ── */}
+      <div className="sidebar glass-card" style={{ alignSelf:'start', position:'sticky', top:'80px' }}>
         <div className="text-center mb-4">
           <div style={{
-            width: '80px',
-            height: '80px',
-            borderRadius: '50%',
-            background: 'var(--primary)',
-            margin: '0 auto 10px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '2rem',
-            fontWeight: 'bold'
-          }}>
-            {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-          </div>
-          <h3>{user?.name || 'User'}</h3>
-          <span className="chip mt-2" style={{ background: 'rgba(30,144,255,0.2)' }}>
-            <i className="fa-solid fa-award text-secondary"></i> Smart Contributor
+            width:'80px', height:'80px', borderRadius:'50%',
+            background:'linear-gradient(135deg, var(--primary), #ff4b1f)',
+            margin:'0 auto 12px', display:'flex', alignItems:'center',
+            justifyContent:'center', fontSize:'2rem', fontWeight:'bold', color:'#fff',
+            boxShadow:'0 0 0 4px rgba(255,106,61,0.2)'
+          }}>{user?.name?.charAt(0).toUpperCase()}</div>
+          <h3 style={{ fontSize:'1.1rem', marginBottom:'4px' }}>{user?.name}</h3>
+          <p className="text-muted" style={{ fontSize:'0.8rem', marginBottom:'8px' }}>{user?.email}</p>
+          <span className="chip" style={{ background:'rgba(16,185,129,0.15)', color:'var(--success)', border:'1px solid rgba(16,185,129,0.3)', fontSize:'0.75rem' }}>
+            <i className="fa-solid fa-circle-check"></i> Verified Citizen
           </span>
         </div>
-        <Link to="/dashboard" className="sidebar-link active">
-          <i className="fa-solid fa-house-user"></i> My Profile
-        </Link>
-        <Link to="/raise" className="sidebar-link">
-          <i className="fa-solid fa-plus"></i> New Complaint
-        </Link>
-        <Link to="/track" className="sidebar-link">
-          <i className="fa-solid fa-magnifying-glass-location"></i> Track Status
-        </Link>
+
+        <div style={{ borderTop:'1px solid rgba(255,255,255,0.08)', paddingTop:'1rem' }}>
+          <Link to="/dashboard" className="sidebar-link active">
+            <i className="fa-solid fa-house-user"></i> My Dashboard
+          </Link>
+          <Link to="/raise" className="sidebar-link">
+            <i className="fa-solid fa-plus"></i> Raise Complaint
+          </Link>
+          <Link to="/track" className="sidebar-link">
+            <i className="fa-solid fa-magnifying-glass-location"></i> Track Status
+          </Link>
+          <Link to="/helpline" className="sidebar-link">
+            <i className="fa-solid fa-phone-volume"></i> Helpline
+          </Link>
+        </div>
+
+        <div className="mt-3 p-3 glass" style={{ borderRadius:'8px', textAlign:'center' }}>
+          <div style={{ fontSize:'2rem', fontWeight:'bold', color:'var(--primary)' }}>
+            {resolved * 50 + 250}
+          </div>
+          <div className="text-muted" style={{ fontSize:'0.8rem', marginBottom:'8px' }}>Civic Score</div>
+          <div style={{ height:'6px', background:'rgba(255,255,255,0.1)', borderRadius:'3px' }}>
+            <div style={{ height:'100%', width:`${totalScore}%`, background:'linear-gradient(90deg, var(--primary), var(--secondary))', borderRadius:'3px', transition:'width 1s' }}></div>
+          </div>
+          <small className="text-muted">{resolved} of {complaints.length} resolved</small>
+        </div>
       </div>
+
+      {/* ── Main Content ── */}
       <div className="dashboard-content">
-        {error && (
-          <div className="alert alert-danger mb-4">
-            <i className="fa-solid fa-exclamation-triangle"></i> {error}
-          </div>
-        )}
+        {error && <div className="alert alert-danger"><i className="fa-solid fa-exclamation-triangle"></i> {error}</div>}
 
-        <div className="glass-card mb-4">
-          <h2><i className="fa-solid fa-hand-holding-heart text-primary"></i> Welcome back, {user?.name}!</h2>
-          <div className="d-flex align-center gap-3 mt-3">
-            <div style={{ fontSize: '3rem', fontWeight: 'bold', color: 'var(--primary)' }}>
-              {complaints.filter(c => c.status === 'Resolved').length * 50 + 250}
-            </div>
+        {/* Welcome banner */}
+        <div className="glass-card mb-3 fade-in" style={{ background:'linear-gradient(135deg, rgba(255,106,61,0.1), rgba(30,144,255,0.1))', border:'1px solid rgba(255,106,61,0.2)' }}>
+          <div className="d-flex justify-between align-center">
             <div>
-              <p>You are a verified active citizen.</p>
-              <div style={{ width: '200px', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', marginTop: '5px' }}>
-                <div style={{
-                  width: `${Math.min(100, (complaints.filter(c => c.status === 'Resolved').length / Math.max(complaints.length, 1)) * 100)}%`,
-                  height: '100%',
-                  background: 'var(--primary)',
-                  borderRadius: '3px'
-                }}></div>
-              </div>
-              <small className="text-muted">
-                {complaints.filter(c => c.status === 'Resolved').length} complaints resolved
-              </small>
+              <h2 style={{ fontSize:'1.6rem', marginBottom:'6px' }}>
+                Welcome back, <span style={{ color:'var(--primary)' }}>{user?.name?.split(' ')[0]}</span>! 👋
+              </h2>
+              <p className="text-muted">Here's an overview of your civic contributions.</p>
             </div>
+            <Link to="/raise" className="btn btn-primary">
+              <i className="fa-solid fa-plus"></i> New Complaint
+            </Link>
           </div>
         </div>
 
-        <div className="grid-2">
-          <div className="glass-card">
-            <h3 className="mb-3">
-              <i className="fa-solid fa-chart-line text-primary"></i> Complaint Statistics
-            </h3>
-            <div className="stats-grid">
-              <div className="stat-item">
-                <div className="stat-number">{complaints.length}</div>
-                <div className="stat-label">Total Complaints</div>
+        {/* Stats row */}
+        <div className="grid-4 mb-3">
+          {[
+            { label:'Total Filed', value:complaints.length, icon:'fa-file-lines', color:'#3b82f6', cls:'stat-card-total' },
+            { label:'Resolved',    value:resolved,          icon:'fa-check-circle', color:'#10b981', cls:'stat-card-resolved' },
+            { label:'Pending',     value:pending,           icon:'fa-hourglass-half', color:'#f59e0b', cls:'stat-card-pending' },
+            { label:'Urgent',      value:urgent,            icon:'fa-triangle-exclamation', color:'#ef4444', cls:'stat-card-emergency' },
+          ].map(s => (
+            <div key={s.label} className={`glass-card text-center ${s.cls}`} style={{ padding:'20px' }}>
+              <div style={{ width:'50px', height:'50px', borderRadius:'12px', background:`${s.color}20`, margin:'0 auto 12px', display:'flex', alignItems:'center', justifyContent:'center', color:s.color, fontSize:'1.5rem' }}>
+                <i className={`fa-solid ${s.icon}`}></i>
               </div>
-              <div className="stat-item">
-                <div className="stat-number text-success">
-                  {complaints.filter(c => c.status === 'Resolved').length}
-                </div>
-                <div className="stat-label">Resolved</div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-number text-warning">
-                  {complaints.filter(c => ['Submitted', 'Under Review', 'In Progress'].includes(c.status)).length}
-                </div>
-                <div className="stat-label">Pending</div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-number text-danger">
-                  {complaints.filter(c => c.priority === 'Urgent' && c.status !== 'Resolved').length}
-                </div>
-                <div className="stat-label">Urgent</div>
-              </div>
+              <div style={{ fontSize:'2.2rem', fontWeight:'bold', color:s.color }}>{s.value}</div>
+              <div className="text-muted" style={{ fontSize:'0.85rem' }}>{s.label}</div>
             </div>
-          </div>
-
-          <div className="glass-card">
-            <h3 className="mb-3">
-              <i className="fa-solid fa-clock text-warning"></i> Recent Activity
-            </h3>
-            <div className="activity-list">
-              {complaints.slice(0, 5).map(c => (
-                <div key={c._id} className="activity-item">
-                  <div className="activity-icon">
-                    <i className={`fa-solid ${getPriorityIcon(c.priority)}`}></i>
-                  </div>
-                  <div className="activity-content">
-                    <div className="activity-title">{c.title}</div>
-                    <div className="activity-meta">
-                      {c.department} • {new Date(c.createdAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                  <div className="activity-status">
-                    <span className="chip" style={{
-                      background: `rgba(${getStatusColor(c.status) === 'var(--success)' ? '16,185,129' :
-                        getStatusColor(c.status) === 'var(--warning)' ? '245,158,11' :
-                        getStatusColor(c.status) === 'var(--info)' ? '59,130,246' :
-                        getStatusColor(c.status) === 'var(--danger)' ? '239,68,68' : '156,163,175'},0.2)`,
-                      color: getStatusColor(c.status),
-                      border: 'none'
-                    }}>
-                      {c.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-              {complaints.length === 0 && (
-                <div className="text-center text-muted py-3">
-                  <i className="fa-solid fa-inbox fa-2x mb-2"></i>
-                  <p>No complaints yet. <Link to="/raise">Create your first complaint</Link></p>
-                </div>
-              )}
-            </div>
-          </div>
+          ))}
         </div>
 
-        <div className="glass-card mt-4">
-          <h3 className="mb-3">
-            <i className="fa-solid fa-list text-info"></i> Recent Complaints
-          </h3>
-          {complaints.length > 0 ? (
-            <div className="complaints-list">
-              {complaints.map(c => (
-                <div key={c._id} className="complaint-item glass p-3 mb-2">
-                  <div className="d-flex justify-between align-start">
-                    <div className="flex-1">
-                      <h4 className="mb-1">{c.title}</h4>
-                      <div className="complaint-meta">
-                        <span className="chip small" style={{ background: 'rgba(30,144,255,0.2)' }}>
-                          <i className="fa-solid fa-building"></i> {c.department}
-                        </span>
-                        <span className="text-muted small">
-                          {new Date(c.createdAt).toLocaleDateString()} at {new Date(c.createdAt).toLocaleTimeString()}
-                        </span>
-                      </div>
-                      <p className="text-muted mt-2">{c.description.substring(0, 100)}...</p>
-                      {c.images && c.images.length > 0 && (
-                        <div className="mt-2">
-                          <small className="text-muted">
-                            <i className="fa-solid fa-paperclip"></i> {c.images.length} attachment(s)
-                          </small>
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <span className="chip mb-2" style={{
-                        background: `rgba(${getStatusColor(c.status) === 'var(--success)' ? '16,185,129' :
-                          getStatusColor(c.status) === 'var(--warning)' ? '245,158,11' :
-                          getStatusColor(c.status) === 'var(--info)' ? '59,130,246' :
-                          getStatusColor(c.status) === 'var(--danger)' ? '239,68,68' : '156,163,175'},0.2)`,
-                        color: getStatusColor(c.status),
-                        border: 'none'
-                      }}>
-                        {c.status}
-                      </span>
-                      <div className="priority-indicator">
-                        <i className={`fa-solid ${getPriorityIcon(c.priority)}`}></i>
-                        <small className="text-muted"> {c.priority}</small>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+        {/* Complaints grid */}
+        <div className="glass-card fade-in">
+          <div className="d-flex justify-between align-center mb-3">
+            <h3 style={{ margin:0 }}>
+              <i className="fa-solid fa-list-check text-secondary"></i> My Complaints
+              <span className="chip ms-2" style={{ fontSize:'0.75rem', background:'rgba(30,144,255,0.15)', color:'var(--secondary)' }}>{complaints.length}</span>
+            </h3>
+            <Link to="/track" className="btn btn-outline btn-sm">View Timeline</Link>
+          </div>
+
+          {complaints.length === 0 ? (
+            <div className="text-center py-5">
+              <i className="fa-solid fa-clipboard-check fa-4x text-muted mb-3"></i>
+              <h4 style={{ marginBottom:'10px' }}>No complaints filed yet</h4>
+              <p className="text-muted mb-3">Help improve your city by reporting civic issues.</p>
+              <Link to="/raise" className="btn btn-primary">
+                <i className="fa-solid fa-plus"></i> File First Complaint
+              </Link>
             </div>
           ) : (
-            <div className="text-center py-4">
-              <i className="fa-solid fa-file-alt fa-3x text-muted mb-3"></i>
-              <h4>No complaints found</h4>
-              <p>Start by raising your first complaint to see it here.</p>
-              <Link to="/raise" className="btn btn-primary mt-3">
-                <i className="fa-solid fa-plus"></i> Raise Complaint
-              </Link>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(290px, 1fr))', gap:'16px' }}>
+              {complaints.map(c => {
+                const sc = STATUS_COLORS[c.status] || { bg:'#6b7280', text:'#fff' };
+                const deptIcon = DEPT_ICONS[c.department] || 'fa-building';
+                return (
+                  <div key={c._id} className="glass fade-in"
+                    style={{ borderRadius:'12px', overflow:'hidden', display:'flex', flexDirection:'column', cursor:'pointer', transition:'all 0.3s', border:'1px solid rgba(255,255,255,0.06)' }}
+                    onMouseEnter={e => { e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.boxShadow='0 12px 30px rgba(0,0,0,0.3)'; e.currentTarget.style.borderColor='rgba(255,255,255,0.15)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='none'; e.currentTarget.style.borderColor='rgba(255,255,255,0.06)'; }}
+                  >
+                    {/* Image */}
+                    <div style={{ height:'140px', background:'rgba(0,0,0,0.3)', position:'relative', overflow:'hidden' }}>
+                      {c.images?.length > 0
+                        ? <img src={`http://localhost:5000/uploads/${c.images[0]}`} alt="complaint" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                        : <div style={{ height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'3rem', color:'rgba(255,255,255,0.1)' }}>
+                            <i className={`fa-solid ${deptIcon}`}></i>
+                          </div>
+                      }
+                      {/* Status badge overlay */}
+                      <span style={{ position:'absolute', top:'10px', right:'10px', background:sc.bg, color:sc.text, padding:'4px 12px', borderRadius:'20px', fontSize:'0.75rem', fontWeight:'bold', boxShadow:'0 2px 8px rgba(0,0,0,0.3)' }}>
+                        {c.status}
+                      </span>
+                    </div>
+
+                    {/* Body */}
+                    <div style={{ padding:'16px', flex:1, display:'flex', flexDirection:'column' }}>
+                      <div className="d-flex justify-between align-center mb-1">
+                        <span className={`priority-badge ${PRIORITY_STYLES[c.priority] || 'priority-normal'}`}>
+                          <i className="fa-solid fa-flag"></i> {c.priority}
+                        </span>
+                        <span className="text-muted" style={{ fontSize:'0.75rem' }}>
+                          <i className="fa-regular fa-clock"></i> {new Date(c.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+
+                      <h4 style={{ margin:'8px 0 6px', fontSize:'1rem', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', color:'var(--text-light)' }}>{c.title}</h4>
+
+                      <p className="text-muted" style={{ fontSize:'0.82rem', lineHeight:'1.5', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', marginBottom:'12px', flex:1 }}>
+                        {c.description}
+                      </p>
+
+                      <div style={{ borderTop:'1px solid rgba(255,255,255,0.06)', paddingTop:'10px', display:'flex', flexDirection:'column', gap:'6px' }}>
+                        <div className="d-flex align-center gap-1" style={{ fontSize:'0.8rem' }}>
+                          <i className="fa-solid fa-location-dot text-danger"></i>
+                          <span className="text-muted" style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.location?.split(',')[0]}</span>
+                        </div>
+                        <div className="d-flex justify-between align-center" style={{ fontSize:'0.8rem' }}>
+                          <span style={{ color:'var(--secondary)', display:'flex', alignItems:'center', gap:'5px' }}>
+                            <i className={`fa-solid ${deptIcon}`}></i> {c.department}
+                          </span>
+                          {c.assignedTo
+                            ? <span className="text-success"><i className="fa-solid fa-user-check"></i> Assigned</span>
+                            : <span className="text-warning"><i className="fa-solid fa-hourglass"></i> Pending</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
