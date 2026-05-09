@@ -124,8 +124,11 @@ function Navigation() {
           {isAuthenticated ? (
             <>
               {/* ── Notification Bell ── */}
-              <div ref={notifRef} style={{ position: 'relative' }}>
-                <button className="btn btn-icon" onClick={openNotif} style={{ position: 'relative' }}>
+              <div ref={notifRef} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <button onClick={openNotif} style={{ position: 'relative', background: 'transparent', border: 'none', color: 'var(--text-light)', fontSize: '1.2rem', cursor: 'pointer', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', transition: 'background 0.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
                   <i className="fa-regular fa-bell"></i>
                   {unreadCount > 0 && (
                     <span style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'var(--danger)', color: '#fff', borderRadius: '50%', width: '18px', height: '18px', fontSize: '0.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', pointerEvents: 'none' }}>
@@ -135,7 +138,7 @@ function Navigation() {
                 </button>
 
                 {notifOpen && (
-                  <div style={{ position: 'absolute', top: 'calc(100% + 10px)', right: '-40px', minWidth: '320px', borderRadius: '14px', zIndex: 1002, background: 'var(--bg-dark)', boxShadow: '0 15px 40px rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.1)', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', top: 'calc(100% + 10px)', right: '-10px', width: '320px', maxWidth: '85vw', borderRadius: '14px', zIndex: 1002, background: 'var(--bg-dark)', boxShadow: '0 15px 40px rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.1)', overflow: 'hidden' }}>
                     {/* Header */}
                     <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)' }}>
                       <span style={{ fontWeight: '700', fontSize: '0.95rem' }}>
@@ -181,15 +184,13 @@ function Navigation() {
 
               {/* ── Profile Menu ── */}
               <div ref={profileRef} style={{ position: 'relative' }}>
-                <div onClick={openProfile} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', background: 'rgba(255,255,255,0.06)', padding: '5px 14px 5px 5px', borderRadius: '25px', transition: 'background 0.25s', userSelect: 'none' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+                <div onClick={openProfile} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', borderRadius: '50%', transition: 'transform 0.2s', userSelect: 'none' }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                 >
-                  <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), #ff4b1f)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1rem', flexShrink: 0 }}>
+                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), #ff4b1f)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.1rem', flexShrink: 0, boxShadow: '0 0 0 2px rgba(255,255,255,0.1)' }}>
                     {user?.name?.charAt(0).toUpperCase()}
                   </div>
-                  <span style={{ fontWeight: '500', fontSize: '0.95rem' }}>{user?.name?.split(' ')[0]}</span>
-                  <i className="fa-solid fa-chevron-down" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', transition: 'transform 0.25s', transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}></i>
                 </div>
 
                 {dropdownOpen && (

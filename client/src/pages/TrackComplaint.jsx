@@ -31,7 +31,9 @@ export default function TrackComplaint() {
       const res = await axios.get(`${API_URL}/api/complaints`);
       if (res.data.success) {
         setComplaints(res.data.data);
-        if (res.data.data.length > 0) setSelected(res.data.data[0]);
+      if (res.data.data.length > 0) {
+          // Do not auto-select on load
+      }
       }
     } catch { setError('Could not load complaints. Make sure you are logged in.'); }
     finally { setLoading(false); }
@@ -119,7 +121,12 @@ export default function TrackComplaint() {
             <div className="glass-card fade-in">
               {/* Header */}
               <div className="d-flex justify-between align-center mb-3">
-                <h3 style={{ margin:0, fontSize:'1.2rem' }}>{selected.title}</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <button onClick={() => setSelected(null)} className="btn-icon" style={{ width:'32px', height:'32px', border:'none', background:'rgba(255,255,255,0.1)' }}>
+                    <i className="fa-solid fa-arrow-left"></i>
+                  </button>
+                  <h3 style={{ margin:0, fontSize:'1.2rem' }}>{selected.title}</h3>
+                </div>
                 <span style={{ background:STATUS_COLORS[selected.status], color:'#fff', padding:'5px 14px', borderRadius:'20px', fontWeight:'bold', fontSize:'0.85rem', flexShrink:0, marginLeft:'10px' }}>
                   {selected.status}
                 </span>

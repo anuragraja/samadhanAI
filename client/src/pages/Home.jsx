@@ -81,14 +81,14 @@ export default function Home() {
 
       {/* ── Stats ── */}
       <div className="glass-card mb-4" style={{ background: 'linear-gradient(135deg, rgba(30,144,255,0.08), rgba(255,106,61,0.08))', border: '1px solid rgba(255,255,255,0.08)' }}>
-        <div className="d-flex justify-between align-center" style={{ flexWrap: 'wrap', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '20px' }}>
           {[
             { num: '10K+', label: 'Complaints Resolved', icon: 'fa-check-circle', color: '#10b981' },
             { num: '95%', label: 'AI Accuracy Rate', icon: 'fa-brain', color: '#8b5cf6' },
             { num: '5', label: 'Departments Covered', icon: 'fa-building', color: '#3b82f6' },
             { num: '24/7', label: 'Real-time Monitoring', icon: 'fa-satellite', color: '#f59e0b' },
           ].map(s => (
-            <div key={s.label} className="text-center" style={{ flex: 1, minWidth: '120px' }}>
+            <div key={s.label} className="text-center">
               <div style={{ color: s.color, fontSize: '1.5rem', marginBottom: '6px' }}><i className={`fa-solid ${s.icon}`}></i></div>
               <div style={{ fontSize: '2rem', fontWeight: '800', color: s.color }}>{s.num}</div>
               <div className="text-muted" style={{ fontSize: '0.8rem' }}>{s.label}</div>

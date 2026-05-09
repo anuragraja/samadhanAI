@@ -78,12 +78,6 @@ export default function Login() {
       <div className="text-center mt-3">
         <p>Don't have an account? <Link to="/register" className="text-primary">Register here</Link></p>
       </div>
-
-      <div className="mt-4 p-3 glass" style={{ fontSize: '0.9rem' }}>
-        <strong>Demo Accounts:</strong><br/>
-        User: user@example.com / password123<br/>
-        Admin: admin@samadhanai.com / admin123
-      </div>
     </div>
   );
 }

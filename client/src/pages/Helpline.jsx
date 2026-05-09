@@ -8,8 +8,8 @@ export default function Helpline() {
         <p className="text-muted mb-4">Dedicated support for rural and offline access.</p>
         
         <div className="grid-2 mb-4">
-            <button className="btn btn-primary w-100" style={{ padding: '15px' }}><i className="fa-solid fa-phone"></i> Call 1900-111-222</button>
-            <button className="btn btn-secondary w-100" style={{ padding: '15px' }}><i className="fa-solid fa-comment-sms"></i> SMS "HELP" to 55555</button>
+            <a href="tel:1900111222" className="btn btn-primary w-100" style={{ padding: '15px', textDecoration: 'none' }}><i className="fa-solid fa-phone"></i> Call 1900-111-222</a>
+            <a href="sms:55555?body=HELP" className="btn btn-secondary w-100" style={{ padding: '15px', textDecoration: 'none' }}><i className="fa-solid fa-comment-sms"></i> SMS "HELP" to 55555</a>
         </div>
 
         <div className="glass p-3 text-left" style={{ borderRadius: '8px' }}>

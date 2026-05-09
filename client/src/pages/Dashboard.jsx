@@ -121,9 +121,14 @@ export default function Dashboard() {
               </h2>
               <p className="text-muted">Here's an overview of your civic contributions.</p>
             </div>
-            <Link to="/raise" className="btn btn-primary">
-              <i className="fa-solid fa-plus"></i> New Complaint
-            </Link>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <Link to="/helpline" className="btn btn-outline" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                <i className="fa-solid fa-phone-volume"></i> Helpline
+              </Link>
+              <Link to="/raise" className="btn btn-primary">
+                <i className="fa-solid fa-plus"></i> New Complaint
+              </Link>
+            </div>
           </div>
         </div>
 
