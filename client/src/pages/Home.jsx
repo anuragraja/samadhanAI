@@ -63,7 +63,7 @@ export default function Home() {
         </div>
 
         <div className="hero-image" style={{ position: 'relative' }}>
-          <div style={{ position: 'relative', width: '350px', height: '350px' }}>
+          <div style={{ position: 'relative', width: 'min(350px, 90vw)', height: 'min(350px, 90vw)' }}>
             {/* Creative Rotating Rings */}
             <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px dashed rgba(30,144,255,0.3)', animation: 'spin 20s linear infinite' }}></div>
             <div style={{ position: 'absolute', inset: '20px', borderRadius: '50%', border: '2px dashed rgba(255,106,61,0.2)', animation: 'spin 15s linear infinite reverse' }}></div>

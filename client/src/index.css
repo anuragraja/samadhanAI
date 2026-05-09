@@ -427,6 +427,10 @@ select.form-control option { background-color: var(--bg-dark); color: var(--text
     white-space: nowrap;
 }
 
+@media (max-width: 768px) {
+    .hide-on-mobile { display: none !important; }
+}
+
 .priority-badge {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 0.25rem 0.75rem; border-radius: var(--radius-full);

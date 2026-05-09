@@ -83,7 +83,7 @@ export default function TrackComplaint() {
       ) : (
         <div className="grid-2 fade-in" style={{ alignItems:'start' }}>
           {/* List panel */}
-          <div className="glass-card" style={{ maxHeight:'620px', overflowY:'auto' }}>
+          <div className={`glass-card ${selected ? 'hide-on-mobile' : ''}`} style={{ maxHeight:'620px', overflowY:'auto', scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' }}>
             <h4 className="mb-3" style={{ fontSize:'1rem' }}>
               <i className="fa-solid fa-list text-primary"></i> Complaints
               <span className="chip ms-2" style={{ fontSize:'0.7rem', background:'rgba(30,144,255,0.15)', color:'var(--secondary)' }}>{filtered.length}</span>
