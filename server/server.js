@@ -329,6 +329,7 @@ app.post('/api/auth/verify-demo-otp', async (req, res) => {
             user = await new User({
                 name: 'Phone User',
                 phone,
+                email: `user_${phone.replace('+', '')}@samadhanai.com`,
                 authProvider: 'phone',
                 role: 'user'
             }).save();
