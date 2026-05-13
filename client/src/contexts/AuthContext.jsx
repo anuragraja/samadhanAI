@@ -100,6 +100,58 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const firebaseLogin = async (userData) => {
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/firebase-login`, userData);
+
+      if (response.data.success) {
+        const { token: newToken, user: userInfo } = response.data;
+        localStorage.setItem('token', newToken);
+        localStorage.setItem('user', JSON.stringify(userInfo));
+        setToken(newToken);
+        setUser(userInfo);
+        return { success: true };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Firebase login failed'
+      };
+    }
+  };
+
+  const sendDemoOtp = async (phone) => {
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/send-demo-otp`, { phone });
+      return response.data;
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to send OTP'
+      };
+    }
+  };
+
+  const verifyDemoOtp = async (phone, otp) => {
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/verify-demo-otp`, { phone, otp });
+
+      if (response.data.success) {
+        const { token: newToken, user: userInfo } = response.data;
+        localStorage.setItem('token', newToken);
+        localStorage.setItem('user', JSON.stringify(userInfo));
+        setToken(newToken);
+        setUser(userInfo);
+        return { success: true };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'OTP verification failed'
+      };
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -114,6 +166,9 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     register,
+    firebaseLogin,
+    sendDemoOtp,
+    verifyDemoOtp,
     logout,
     isAuthenticated: !!token,
     isAdmin: user?.role === 'department_admin' || user?.role === 'super_admin',

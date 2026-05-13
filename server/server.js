@@ -63,12 +63,16 @@ io.on('connection', (socket) => {
 // ─── Schemas ───────────────────────────────────────────────────────────────
 const UserSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    email: { type: String, sparse: true, unique: true },
+    password: { type: String },
     role: { type: String, enum: ['user', 'department_admin', 'super_admin'], default: 'user' },
     department: { type: String, enum: ['Water Department', 'Electricity Department', 'Road Department', 'Public Safety', 'Garbage Department', 'General', null], default: null },
     phone: { type: String },
-    createdAt: { type: Date, default: Date.now }
+    photoURL: { type: String },
+    firebaseUID: { type: String, unique: true, sparse: true },
+    authProvider: { type: String, enum: ['google', 'phone', 'email'], default: 'email' },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
 });
 
 const TimelineSchema = new mongoose.Schema({
@@ -102,6 +106,13 @@ const ComplaintSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', UserSchema);
 const Complaint = mongoose.model('Complaint', ComplaintSchema);
+
+const OtpSchema = new mongoose.Schema({
+    phone: { type: String, required: true },
+    otp: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now, expires: 300 } // 5 minutes
+});
+const Otp = mongoose.model('Otp', OtpSchema);
 
 // ─── Auth Middleware ────────────────────────────────────────────────────────
 const authenticateToken = (req, res, next) => {
@@ -189,7 +200,7 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
     try {
         const user = await User.findById(req.user.id).select('-password');
         if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-        res.json({ success: true, user: { id: user._id, name: user.name, email: user.email, role: user.role, department: user.department } });
+        res.json({ success: true, user: { id: user._id, name: user.name, email: user.email, role: user.role, department: user.department, photoURL: user.photoURL, phone: user.phone, authProvider: user.authProvider } });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -219,7 +230,7 @@ app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
-        if (!user || !(await bcrypt.compare(password, user.password))) {
+        if (!user || !user.password || !(await bcrypt.compare(password, user.password))) {
             return res.status(400).json({ success: false, message: 'Invalid email or password' });
         }
         const token = jwt.sign(
@@ -228,7 +239,109 @@ app.post('/api/auth/login', async (req, res) => {
         );
         res.json({
             success: true, message: 'Login successful', token,
-            user: { id: user._id, name: user.name, email: user.email, role: user.role, department: user.department }
+            user: { id: user._id, name: user.name, email: user.email, role: user.role, department: user.department, photoURL: user.photoURL, phone: user.phone, authProvider: user.authProvider }
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// Auth: Firebase Google Login
+app.post('/api/auth/firebase-login', async (req, res) => {
+    try {
+        const { firebaseUID, email, name, photoURL } = req.body;
+        
+        if (!firebaseUID || !email) {
+            return res.status(400).json({ success: false, message: 'Firebase UID and email are required' });
+        }
+
+        let user = await User.findOne({ email });
+
+        if (user) {
+            // Update existing user with Firebase info if not present
+            user.firebaseUID = firebaseUID;
+            if (!user.photoURL) user.photoURL = photoURL;
+            if (user.authProvider !== 'google') user.authProvider = 'google';
+            await user.save();
+        } else {
+            // Create new user
+            user = await new User({
+                name: name || 'Google User',
+                email,
+                firebaseUID,
+                photoURL,
+                authProvider: 'google',
+                role: 'user'
+            }).save();
+        }
+
+        const token = jwt.sign(
+            { id: user._id, email: user.email, role: user.role, department: user.department },
+            JWT_SECRET, { expiresIn: '7d' }
+        );
+
+        res.json({
+            success: true, message: 'Google login successful', token,
+            user: { id: user._id, name: user.name, email: user.email, role: user.role, department: user.department, photoURL: user.photoURL, phone: user.phone, authProvider: user.authProvider }
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// Auth: Send Demo OTP
+app.post('/api/auth/send-demo-otp', async (req, res) => {
+    try {
+        const { phone } = req.body;
+        if (!phone) return res.status(400).json({ success: false, message: 'Phone number is required' });
+
+        // Generate 6-digit OTP
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Upsert OTP (clear old ones for this phone, or just add new and delete old)
+        await Otp.deleteMany({ phone });
+        await new Otp({ phone, otp: otpCode }).save();
+
+        res.json({
+            success: true,
+            message: 'OTP generated for demo purposes',
+            otp: otpCode // sending back for demo
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// Auth: Verify Demo OTP and Login/Signup
+app.post('/api/auth/verify-demo-otp', async (req, res) => {
+    try {
+        const { phone, otp } = req.body;
+        if (!phone || !otp) return res.status(400).json({ success: false, message: 'Phone and OTP are required' });
+
+        const validOtp = await Otp.findOne({ phone, otp });
+        if (!validOtp) return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+
+        // OTP is valid, clean it up
+        await Otp.deleteOne({ _id: validOtp._id });
+
+        let user = await User.findOne({ phone });
+        if (!user) {
+            user = await new User({
+                name: 'Phone User',
+                phone,
+                authProvider: 'phone',
+                role: 'user'
+            }).save();
+        }
+
+        const token = jwt.sign(
+            { id: user._id, phone: user.phone, role: user.role, department: user.department },
+            JWT_SECRET, { expiresIn: '7d' }
+        );
+
+        res.json({
+            success: true, message: 'OTP verified successfully', token,
+            user: { id: user._id, name: user.name, email: user.email, role: user.role, department: user.department, photoURL: user.photoURL, phone: user.phone, authProvider: user.authProvider }
         });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
